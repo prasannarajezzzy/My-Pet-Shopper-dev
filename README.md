@@ -1,2 +1,6 @@
-# My-Pet-Shopper-dev
-My-Pet-Shopper
+﻿# My-Pet-Shopper-React
+ ## Run Project 
+
+ npm i
+
+ npm start
