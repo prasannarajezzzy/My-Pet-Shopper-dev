@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { View, StyleSheet, FlatList } from "react-native";
-import ProductCard from "./ProductCard"; // Make sure to create this component
+import ProductCard from "./ProductCard";
+import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
+// Make sure to create this component
+const Stack = createStackNavigator();
 
 const HomeScreen = () => {
   // Static product data, replace with your actual API fetch if needed
@@ -97,14 +101,16 @@ const HomeScreen = () => {
   };
 
   return (
-    <FlatList
-      data={products}
-      keyExtractor={(item) => item._id}
-      renderItem={({ item }) => <ProductCard product={item} />}
-      numColumns={2} // Set the number of columns for the grid
-      columnWrapperStyle={styles.column}
-      contentContainerStyle={styles.container}
-    />
+    <>
+      <FlatList
+        data={products}
+        keyExtractor={(item) => item._id}
+        renderItem={({ item }) => <ProductCard product={item} />}
+        numColumns={2} // Set the number of columns for the grid
+        columnWrapperStyle={styles.column}
+        contentContainerStyle={styles.container}
+      />
+    </>
   );
 };
 

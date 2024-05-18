@@ -1,68 +1,83 @@
 import React, { useState, useEffect } from "react";
 import {
   View,
-  Text,
   TextInput,
-  Button,
-  StyleSheet,
-  Image,
   TouchableOpacity,
+  Text,
+  StyleSheet,
+  Alert,
 } from "react-native";
-import * as ImagePicker from "expo-image-picker";
 import axios from "axios";
+import * as Location from "expo-location";
 
-const SignUpScreen = () => {
+const SignUpScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
-  const [image, setImage] = useState(
-    "https://via.placeholder.com/200" // Default image URL
-  );
-  const [isImagePicked, setIsImagePicked] = useState(false);
+  const [location, setLocation] = useState(null);
+  const [place, setPlace] = useState("Fetching location...");
+  const [errorMsg, setErrorMsg] = useState(null);
 
   useEffect(() => {
-    setIsImagePicked(image !== "https://via.placeholder.com/200");
-  }, [image]);
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setErrorMsg("Permission to access location was denied");
+        setPlace("Location permission denied");
+        return;
+      }
 
-  const pickImage = async () => {
-    let result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
+      let location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+      setLocation(location);
 
-    if (!result.cancelled) {
-      console.log("test test");
-      setImage(
-        "https://static.wixstatic.com/media/fd287c_33656db543a349c980497631344f7bf9~mv2.png/v1/crop/x_932,y_0,w_1068,h_979/fill/w_853,h_979,fp_0.50_0.50,q_90,enc_auto/home_background7.png"
-      );
-    }
-  };
+      try {
+        const response = await fetch(
+          `https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=82e3342f6dfe449da3623dc0d22a326c`
+        );
+        const data = await response.json();
+        const locationDetails = data.results[0].components;
+        const city =
+          locationDetails.city ||
+          locationDetails.town ||
+          locationDetails.village;
+        setPlace(city);
+      } catch (error) {
+        console.error("Failed to fetch location", error);
+        setPlace("Failed to fetch location");
+      }
+    })();
+  }, []);
 
   const signUp = async () => {
+    if (!location) {
+      Alert.alert(
+        "Error",
+        "Location is not available. Please enable location services."
+      );
+      return;
+    }
+
     try {
       const formData = new FormData();
-      formData.append("email", email);
       formData.append("name", name);
+      formData.append("email", email);
       formData.append("password", password);
-      formData.append("image", {
-        uri: image,
-        name: "image.jpg",
-        type: "image/jpg",
-      });
 
-      const response = await axios.post("YOUR_API_ENDPOINT", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const response = await axios.post(
+        "https://my-pet-shopper-api.onrender.com/api/v1/register",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-      console.log("Response:", response.data);
-      // Handle successful signup response
+      // Show success message
+      navigation.navigate("Login"); // Navigate to the Login screen after signup
     } catch (error) {
       console.error("Error signing up:", error);
-      // Handle error
     }
   };
 
@@ -87,20 +102,20 @@ const SignUpScreen = () => {
         value={password}
         onChangeText={setPassword}
       />
-      <TouchableOpacity style={styles.imagePickerButton} onPress={pickImage}>
-        <Text style={styles.imagePickerButtonText}>Take Image</Text>
+      <Text style={styles.locationText}>Location: {place}</Text>
+      <Text style={styles.locationText}>source geocode</Text>
+      <TouchableOpacity style={styles.button} onPress={signUp}>
+        <Text style={styles.buttonText}>Sign Up</Text>
       </TouchableOpacity>
-      {!isImagePicked && (
-        <Image
-          source={{ uri: image }}
-          style={styles.imagePreview}
-          resizeMode="contain"
-        />
-      )}
-      {isImagePicked && (
-        <Image source={{ uri: image }} style={styles.imagePreview} />
-      )}
-      <Button title="Sign Up" onPress={signUp} disabled={!isImagePicked} />
+      <Text style={styles.redirectText}>
+        Already have an account?{" "}
+        <Text
+          style={styles.redirectLink}
+          onPress={() => navigation.navigate("Login")}
+        >
+          Login
+        </Text>
+      </Text>
     </View>
   );
 };
@@ -110,29 +125,42 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    padding: 20,
+    backgroundColor: "#f4f4f8",
   },
   input: {
     width: "80%",
-    height: 40,
-    marginVertical: 10,
+    height: 50,
+    marginBottom: 15,
     paddingHorizontal: 10,
     borderWidth: 1,
+    borderColor: "#ccc",
     borderRadius: 5,
+    backgroundColor: "#ffffff",
+    fontSize: 16,
   },
-  imagePickerButton: {
-    backgroundColor: "blue",
+  button: {
+    backgroundColor: "#6200ee",
     padding: 10,
     borderRadius: 5,
+    alignItems: "center",
     marginTop: 10,
   },
-  imagePickerButtonText: {
+  buttonText: {
     color: "white",
+    fontSize: 18,
     fontWeight: "bold",
   },
-  imagePreview: {
-    width: 200,
-    height: 200,
-    marginTop: 10,
+  redirectText: {
+    marginTop: 20,
+  },
+  redirectLink: {
+    color: "#6200ee",
+    textDecorationLine: "underline",
+  },
+  locationText: {
+    fontSize: 16,
+    marginVertical: 10,
   },
 });
 

@@ -22,9 +22,9 @@ function LoginScreen() {
     const token = await AsyncStorage.getItem("userToken");
     const userData = await AsyncStorage.getItem("userData");
     console.log("userData", userData);
-    // if (token) {
-    //   navigation.navigate("Home"); // Adjust "HomeScreen" as per your actual home screen route name
-    // }
+    if (token) {
+      navigation.navigate("Home"); // Adjust "HomeScreen" as per your actual home screen route name
+    }
   };
 
   const handleLogin = async () => {
@@ -80,6 +80,9 @@ function LoginScreen() {
       <TouchableOpacity onPress={handleLogin} style={styles.button}>
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
+      <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
+        <Text style={styles.signUpText}>New user? Sign up</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -107,11 +110,17 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     alignItems: "center",
+    marginTop: 10,
   },
   buttonText: {
     color: "white",
     fontSize: 18,
     fontWeight: "bold",
+  },
+  signUpText: {
+    color: "#6200ee",
+    fontSize: 16,
+    marginTop: 15,
   },
 });
 

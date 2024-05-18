@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { View, FlatList, StyleSheet, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ProductCard from "./ProductCard"; // Make sure to create this component
-
 const HomeScreen = ({ navigation }) => {
   const [products, setProducts] = useState([]);
 
