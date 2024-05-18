@@ -11,18 +11,18 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import axios from "axios";
 
-const defaultUserIcon = "https://via.placeholder.com/200";
-
 const SignUpScreen = () => {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
-  const [image, setImage] = useState(null);
+  const [image, setImage] = useState(
+    "https://via.placeholder.com/200" // Default image URL
+  );
+  const [isImagePicked, setIsImagePicked] = useState(false);
 
   useEffect(() => {
-    // Initialize with the default image
-    setImage(defaultUserIcon);
-  }, []);
+    setIsImagePicked(image !== "https://via.placeholder.com/200");
+  }, [image]);
 
   const pickImage = async () => {
     let result = await ImagePicker.launchCameraAsync({
@@ -31,10 +31,12 @@ const SignUpScreen = () => {
       aspect: [4, 3],
       quality: 1,
     });
-    console.log(result, "res");
 
     if (!result.cancelled) {
-      setImage(result.uri);
+      console.log("test test");
+      setImage(
+        "https://static.wixstatic.com/media/fd287c_33656db543a349c980497631344f7bf9~mv2.png/v1/crop/x_932,y_0,w_1068,h_979/fill/w_853,h_979,fp_0.50_0.50,q_90,enc_auto/home_background7.png"
+      );
     }
   };
 
@@ -66,13 +68,6 @@ const SignUpScreen = () => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.imageContainer} onPress={pickImage}>
-        <Image
-          source={{ uri: image }}
-          style={styles.previewImage}
-          resizeMode="cover"
-        />
-      </TouchableOpacity>
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -92,11 +87,20 @@ const SignUpScreen = () => {
         value={password}
         onChangeText={setPassword}
       />
-      <Button
-        title="Sign Up"
-        onPress={signUp}
-        disabled={!image || image === defaultUserIcon}
-      />
+      <TouchableOpacity style={styles.imagePickerButton} onPress={pickImage}>
+        <Text style={styles.imagePickerButtonText}>Take Image</Text>
+      </TouchableOpacity>
+      {!isImagePicked && (
+        <Image
+          source={{ uri: image }}
+          style={styles.imagePreview}
+          resizeMode="contain"
+        />
+      )}
+      {isImagePicked && (
+        <Image source={{ uri: image }} style={styles.imagePreview} />
+      )}
+      <Button title="Sign Up" onPress={signUp} disabled={!isImagePicked} />
     </View>
   );
 };
@@ -107,18 +111,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  imageContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    overflow: "hidden",
-    marginBottom: 20,
-  },
-  previewImage: {
-    width: 200, // Larger width for better preview
-    height: 200, // Larger height for better preview
-    borderRadius: 100, // Make the preview round
-  },
   input: {
     width: "80%",
     height: 40,
@@ -126,6 +118,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderWidth: 1,
     borderRadius: 5,
+  },
+  imagePickerButton: {
+    backgroundColor: "blue",
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  imagePickerButtonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  imagePreview: {
+    width: 200,
+    height: 200,
+    marginTop: 10,
   },
 });
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   TextInput,
@@ -7,94 +7,58 @@ import {
   StyleSheet,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native"; // Assuming you are using @react-navigation
 
-const storeToken = async (token) => {
-  try {
-    await AsyncStorage.setItem("userToken", token);
-  } catch (error) {
-    console.error("AsyncStorage error: ", error.message);
-  }
-};
-
-function LoginScreen({ navigation }) {
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      justifyContent: "center",
-      padding: 20,
-      backgroundColor: "#f4f4f8",
-    },
-    input: {
-      height: 50,
-      marginBottom: 15,
-      paddingHorizontal: 10,
-      borderWidth: 1,
-      borderColor: "#ccc",
-      borderRadius: 5,
-      backgroundColor: "#ffffff",
-      fontSize: 16,
-    },
-    button: {
-      backgroundColor: "#6200ee",
-      padding: 10,
-      borderRadius: 5,
-      alignItems: "center",
-    },
-    buttonText: {
-      color: "white",
-      fontSize: 18,
-      fontWeight: "bold",
-    },
-    linkText: {
-      marginTop: 20,
-      textAlign: "center",
-      color: "#6200ee",
-      fontSize: 16,
-    },
-  });
-
+function LoginScreen() {
+  const navigation = useNavigation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const getToken = async () => {
-    try {
-      const token = await AsyncStorage.getItem("userToken");
-      if (token !== null) {
-        return token;
-      } else {
-        console.log("No token found");
-        return null;
-      }
-    } catch (error) {
-      console.error("Failed to fetch the token from storage", error);
-      return null;
-    }
+
+  useEffect(() => {
+    checkToken();
+  }, []);
+
+  const checkToken = async () => {
+    const token = await AsyncStorage.getItem("userToken");
+    const userData = await AsyncStorage.getItem("userData");
+    console.log("userData", userData);
+    // if (token) {
+    //   navigation.navigate("Home"); // Adjust "HomeScreen" as per your actual home screen route name
+    // }
   };
+
   const handleLogin = async () => {
-    console.log("Login credentials", email, password);
-    navigation.navigate("Home ");
-    return;
     try {
-      const response = await fetch("http://10.0.0.177:8000/api/v1/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await fetch(
+        "https://my-pet-shopper-api.onrender.com/api/v1/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        }
+      );
 
       const json = await response.json();
 
       if (response.ok) {
-        await storeToken(json.token);
-        let val = await getToken();
-        console.log("datass", val);
-        console.log("Truee");
-        navigation.navigate("HomeScreen"); // Redirect to Home component
+        await AsyncStorage.setItem("userToken", json.token); // Save the token
+        console.log(json);
+        await AsyncStorage.setItem("userData", JSON.stringify(json)); // Save the token
+        const userData = await AsyncStorage.getItem("userData");
+        if (userData !== null) {
+          const parsedUserData = JSON.parse(userData);
+          console.log("Retrieved user data:", parsedUserData);
+        }
+
+        navigation.navigate("Home"); // Navigate to the Home screen
       } else {
-        console.error("Error:", json.message);
+        alert("Login failed: " + json.message); // Show error message
       }
     } catch (error) {
-      console.error("Login failed:", error);
+      console.log(error);
+      alert("An error occurred during login", error);
     }
   };
 
@@ -116,14 +80,39 @@ function LoginScreen({ navigation }) {
       <TouchableOpacity onPress={handleLogin} style={styles.button}>
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
-      <Text
-        onPress={() => navigation.navigate("Signup")}
-        style={styles.linkText}
-      >
-        Don't have an account? Sign up
-      </Text>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+    backgroundColor: "#f4f4f8",
+  },
+  input: {
+    height: 50,
+    marginBottom: 15,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    backgroundColor: "#ffffff",
+    fontSize: 16,
+  },
+  button: {
+    backgroundColor: "#6200ee",
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+});
 
 export default LoginScreen;

@@ -1,72 +1,42 @@
-// HomeScreen.js
-import React, { useState } from "react";
-import { View, StyleSheet, FlatList } from "react-native";
-import ProductCard from "./ProductCard"; // Make sure to create this component
-import ProductView from "./ProductView"; // Import ProductView component
-// import LocationComponent from "./LocationComponent";
+import React, { useState, useEffect } from "react";
+import { View, FlatList, StyleSheet, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import ProductCard from "./ProductCard"; // Make sure to create this component
 
 const HomeScreen = ({ navigation }) => {
-  // Static product data, replace with your actual API fetch if needed
-  const [products, setProducts] = useState([
-    {
-      _id: "1",
-      name: "Best Dog Food",
-      description: "Latest model with advanced features",
-      price: 10,
-      ratings: 0,
-      images: [
-        {
-          public_id: "ByteProducts/ql23ouxprps3ygmzhdun",
-          url: "https://image.chewy.com/is/image/catalog/86251_MAIN._AC_SL600_V1649133132_.jpg",
-          _id: "6629f20f8a9ac8d92e1ae187",
-        },
-      ],
-    },
-    {
-      _id: "2",
-      name: "Dog food Pedigree",
-      description: "Latest model with advanced features",
-      price: 12,
-      ratings: 0,
-      images: [
-        {
-          public_id: "ByteProducts/ql23ouxprps3ygmzhdun",
-          url: "https://image.chewy.com/is/image/catalog/86251_MAIN._AC_SL600_V1649133132_.jpg",
-          _id: "6629f20f8a9ac8d92e1ae187",
-        },
-      ],
-    },
-    {
-      _id: "3",
-      name: "Cat Food",
-      description: "Latest model with advanced features",
-      price: 50,
-      ratings: 0,
-      images: [
-        {
-          public_id: "ByteProducts/ql23ouxprps3ygmzhdun",
-          url: "https://image.chewy.com/is/image/catalog/86251_MAIN._AC_SL600_V1649133132_.jpg",
-          _id: "6629f20f8a9ac8d92e1ae187",
-        },
-      ],
-    },
-    {
-      _id: "4",
-      name: "Cat toy",
-      description: "Latest model with advanced features",
-      price: 55,
-      ratings: 0,
-      images: [
-        {
-          public_id: "ByteProducts/ql23ouxprps3ygmzhdun",
-          url: "https://image.chewy.com/is/image/catalog/86251_MAIN._AC_SL600_V1649133132_.jpg",
-          _id: "6629f20f8a9ac8d92e1ae187",
-        },
-      ],
-    },
-    // Add more products here as needed
-  ]);
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const token = await AsyncStorage.getItem("userToken");
+        const response = await fetch(
+          "https://my-pet-shopper-api.onrender.com/api/v1/products",
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        const json = await response.json();
+
+        if (json.success) {
+          setProducts(json.products);
+        } else if (json.message === "jwt expired") {
+          // Handle JWT expiration
+          navigation.navigate("Login"); // Ensure "Login" is the correct route name for your login screen
+        }
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+        Alert.alert("Error", "Failed to load data from server.");
+      }
+    };
+
+    fetchProducts();
+  }, [navigation]);
 
   return (
     <FlatList
@@ -78,7 +48,7 @@ const HomeScreen = ({ navigation }) => {
           onPress={() => navigation.navigate("ProductView", { product: item })}
         />
       )}
-      numColumns={2} // Set the number of columns for the grid
+      numColumns={2}
       columnWrapperStyle={styles.column}
       contentContainerStyle={styles.container}
     />

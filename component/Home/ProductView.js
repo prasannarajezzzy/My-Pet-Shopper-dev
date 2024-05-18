@@ -1,106 +1,62 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Button,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-} from "react-native";
-import * as ImagePicker from "expo-image-picker";
-import axios from "axios";
+import React, { useState } from "react";
+import { View, Text, Button, Image, StyleSheet } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const SignUpScreen = () => {
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
-  const [image, setImage] = useState(
-    "https://via.placeholder.com/200" // Default image URL
-  );
-  const [isImagePicked, setIsImagePicked] = useState(false);
+const ProductView = ({ route, navigation }) => {
+  const { product } = route.params;
+  const [quantity, setQuantity] = useState(1);
 
-  useEffect(() => {
-    setIsImagePicked(image !== "https://via.placeholder.com/200");
-  }, [image]);
+  const addToCart = async () => {
+    try {
+      // await AsyncStorage.setItem("cart", "[]");
+      let existingCart = await AsyncStorage.getItem("cart");
 
-  const pickImage = async () => {
-    let result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
+      if (!existingCart) {
+        existingCart = "[]"; // Initialize cart as empty array if it's undefined
+      }
 
-    if (!result.cancelled) {
-      console.log("test test");
-      setImage(
-        "https://static.wixstatic.com/media/fd287c_33656db543a349c980497631344f7bf9~mv2.png/v1/crop/x_932,y_0,w_1068,h_979/fill/w_853,h_979,fp_0.50_0.50,q_90,enc_auto/home_background7.png"
-      );
+      const cart = JSON.parse(existingCart);
+      // Add multiple instances of the product based on quantity
+      for (let i = 0; i < quantity; i++) {
+        cart.push(product);
+      }
+      await AsyncStorage.setItem("cart", JSON.stringify(cart));
+      alert("Product added to cart!");
+    } catch (error) {
+      console.error("Error adding to cart:", error);
     }
   };
 
-  const signUp = async () => {
-    try {
-      const formData = new FormData();
-      formData.append("email", email);
-      formData.append("name", name);
-      formData.append("password", password);
-      formData.append("image", {
-        uri: image,
-        name: "image.jpg",
-        type: "image/jpg",
-      });
+  const goToCart = () => {
+    navigation.navigate("Cart");
+  };
 
-      const response = await axios.post("YOUR_API_ENDPOINT", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+  const incrementQuantity = () => {
+    setQuantity(quantity + 1);
+  };
 
-      console.log("Response:", response.data);
-      // Handle successful signup response
-    } catch (error) {
-      console.error("Error signing up:", error);
-      // Handle error
+  const decrementQuantity = () => {
+    if (quantity > 1) {
+      setQuantity(quantity - 1);
     }
   };
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Name"
-        value={name}
-        onChangeText={setName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
-      <TouchableOpacity style={styles.imagePickerButton} onPress={pickImage}>
-        <Text style={styles.imagePickerButtonText}>Take Image</Text>
-      </TouchableOpacity>
-      {!isImagePicked && (
-        <Image
-          source={{ uri: image }}
-          style={styles.imagePreview}
-          resizeMode="contain"
-        />
-      )}
-      {isImagePicked && (
-        <Image source={{ uri: image }} style={styles.imagePreview} />
-      )}
-      <Button title="Sign Up" onPress={signUp} disabled={!isImagePicked} />
+      <Image source={{ uri: product.images[0].url }} style={styles.image} />
+      <View style={styles.infoContainer}>
+        <Text style={styles.name}>{product.name}</Text>
+        <Text style={styles.description}>{product.description}</Text>
+        <Text style={styles.price}>Price: ${product.price}</Text>
+        <View style={styles.quantityContainer}>
+          <Text>Quantity: </Text>
+          <Button title="-" onPress={decrementQuantity} />
+          <Text>{quantity}</Text>
+          <Button title="+" onPress={incrementQuantity} />
+        </View>
+        <Button title="Add to Cart" onPress={addToCart} />
+        <Button title="Go to Cart" onPress={goToCart} />
+      </View>
     </View>
   );
 };
@@ -111,29 +67,30 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  input: {
-    width: "80%",
-    height: 40,
-    marginVertical: 10,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderRadius: 5,
-  },
-  imagePickerButton: {
-    backgroundColor: "blue",
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
-  },
-  imagePickerButtonText: {
-    color: "white",
-    fontWeight: "bold",
-  },
-  imagePreview: {
+  image: {
     width: 200,
     height: 200,
-    marginTop: 10,
+    marginBottom: 20,
+  },
+  infoContainer: {
+    alignItems: "center",
+  },
+  name: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  description: {
+    marginBottom: 10,
+  },
+  price: {
+    marginBottom: 10,
+  },
+  quantityContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
   },
 });
 
-export default SignUpScreen;
+export default ProductView;
