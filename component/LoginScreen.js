@@ -71,6 +71,8 @@ function LoginScreen({ navigation }) {
   };
   const handleLogin = async () => {
     console.log("Login credentials", email, password);
+    navigation.navigate("Home ");
+    return;
     try {
       const response = await fetch("http://10.0.0.177:8000/api/v1/login", {
         method: "POST",
